@@ -1,8 +1,9 @@
 import axios from "axios"
 import router from "../router"
 import ElementUI from "element-ui"
-axios.defaults.baseURL = process.env.NODE_ENV === 'development' ? "/api" : "http://www.chst.vip"
 
+
+axios.defaults.baseURL = process.env.NODE_ENV === 'development' ? "/api" : "http://www.chst.vip"
 axios.defaults.withCredentials = true; //
 //设置请求的最长时间 在规定时间内没有请求到数据 就报错
 axios.create({
@@ -36,11 +37,13 @@ axios.interceptors.request.use(function (config) {
     //   console.log(config);
       let {data}=config
       if(data.code=="1004"||data.code=="10022"){
+        localStorage.removeItem("stu_app")
           //当前的后台api中，此时的1004 token校验失败 登陆失效
-        //   alert("登入信息失效，请重新登入")
+        //   alert("登入信息失效，请重新登入") 
+        router.push("/login") 
         ElementUI.Message.error("登入信息失效，请重新登入")
-          //先引入router在使用
-          router.push("/login")
+        window.location.reload()
+          
       }
       return config
   })

@@ -18,18 +18,35 @@
             autocomplete="off"
           ></el-input>
         </el-form-item>
+
+
+
         <el-form-item label="密码" prop="password">
           <el-input
             type="password"
             v-model="ruleForm.password"
-            autocomplete="off"
+           
+            
           ></el-input>
         </el-form-item>
+
+        <el-form-item label="验证码" prop="captcha">
+          <el-input
+            type="captcha"
+            v-model="ruleForm.captcha"
+            autocomplete="off"
+            class="ipt"
+            @keydown.enter.native="submitForm('ruleForm')"
+          ></el-input>
+          <span class="captcha-svg" v-html="captchaSvg" @click="newCaptcha" ></span>
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" @click="submitForm('ruleForm')"
             >提交</el-button
           >
         </el-form-item>
+
       </el-form>
     </div>
     <video
@@ -43,7 +60,7 @@
   </div>
 </template>
 <script>
-import { login } from "@/api";
+import { login,getCaptcha,refreshCaptcha,verifyCaptcha } from "@/api";
 import { mapMutations } from "vuex"
 export default {
   data() {
@@ -61,14 +78,27 @@ export default {
         callback();
       }
     };
+    var validateCaptcha = (rule, value, callback) => {
+      if (value === "") {
+        callback(new Error("请输入验证码"));
+      } else if(value.length>5||value.length<5){
+            this.$message.error("验证码错误错误！！！");
+        }else {
+          callback();
+      }
+    };
     return {
+      captchaSvg: "",
       ruleForm: {
-        username: "",
-        password: ""
+        username: "admin",
+        password: "admin",
+        captcha:"aaaaa",
+       
       },
       rules: {
         username: [{ validator: validateUsername, trigger: "blur" }],
-        password: [{ validator: validatePassword, trigger: "blur" }]
+        password: [{ validator: validatePassword, trigger: "blur" }],
+        captcha: [{ validator: validateCaptcha, trigger: "blur" }]
       }
     };
   },
@@ -76,8 +106,14 @@ export default {
     ...mapMutations(["GET_USERINFO"]),
 
     submitForm(formName) {
-      this.$refs[formName].validate(valid => {
+      this.$refs[formName].validate(async (valid )=> {
         if (valid) {
+          //判断验证码是否正确===先获取到 在判断
+          let verifyRes= await verifyCaptcha(this.ruleForm.captcha)
+          // if(!verifyRes.data.state){
+          //      this.$message.error("验证码错误错误！！！");
+          //      return 
+          // }
           //创建loading事件
           const loading = this.$loading({
             lock: true,
@@ -116,11 +152,29 @@ export default {
           console.log("error submit!!");
           return false;
         }
-      });
-    },
+      
+      })
+      
+      },
     resetForm(formName) {
       this.$refs[formName].resetFields();
-    }
+    },
+     //设置验证码
+      set_captcha(){
+          getCaptcha()
+          .then(res=>{
+            this.captchaSvg=res.data.img
+          })
+      },
+      //更新验证码
+      newCaptcha(){
+        this.set_captcha()
+      }
+
+  },
+  mounted () {
+    this.set_captcha()
+    
   }
 };
 </script>
@@ -146,10 +200,11 @@ export default {
   /* -webkit-transform: translate(-50%, -50%); */
   transform: translate(-50%, -50%);
   border-radius: 11px;
-
   background: rgba(0, 0, 0, 0.2);
   text-align: center;
 }
+
+
 .login_container h1 {
   color: #fff;
   margin-top: 100px;
@@ -183,4 +238,14 @@ export default {
   background-position: 60% 65%;
   z-index: 8;
 }
+/* //验证码样式 */
+ .captcha-svg {
+    background: #fff;
+    display: inline-block;
+    height: 44px;
+    width: 130px;
+    text-align: center;
+    cursor: pointer;
+   
+  }
 </style>

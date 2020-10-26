@@ -1,3 +1,5 @@
 <template>
-    <h1>考勤管理</h1>
+<h1>学生考勤</h1>
+
+
 </template>
